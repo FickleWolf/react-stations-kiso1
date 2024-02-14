@@ -7,36 +7,48 @@ export const CreatePost = (props) => {
   const setShowCreatePost = props.setShowCreatePost;
   const getPosts = props.getPosts;
   const [postContent, setPostContent] = useState('');
+  const [alertText, setAlertText] = useState('');
 
   async function createPost() {
     if (postContent === '') {
-      alert('投稿内容を入力してください。')
+      alert('投稿内容を入力してください。');
+      setAlertText('投稿内容を入力してください。');
       return;
     }
 
+    const obj = { "post": postContent };
+    const method = "POST";
+    const body = JSON.stringify(obj);
+    const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    };
     try {
-      const obj = { "post": postContent };
-      const method = "POST";
-      const body = JSON.stringify(obj);
-      const headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      };
-      const request = await fetch(`${baseUrl}/threads/${threadId}/posts`, { method, headers, body });
-      await request.json().then((res) => {
-        const status = request.status;
+      const responce = await fetch(`${baseUrl}/threads/${threadId}/posts`, { method, headers, body });
+      await responce.json().then((json) => {
+        const status = responce.status;
         if (status !== 200) {
           alert(`投稿に失敗しました。\nstuas:${status}`);
-          return;
+          switch (status) {
+            case 400:
+              setAlertText('投稿に失敗しました。\nバリデーションエラー');
+              return;
+            case 500:
+              setAlertText('投稿に失敗しました。\nサーバーでエラーが発生しました。');
+              return;
+            default:
+              setAlertText(`投稿に失敗しました。\n不明なエラー statusCode:${status}`);
+              return;
+          }
         }
-        const postId = res.id;
+        const postId = json.id;
         alert(`投稿しました。\npostId:${postId}`);
         getPosts();
         setShowCreatePost(false);
       })
     }
     catch (error) {
-      alert(`投稿に失敗しました。\nerror:${error}`);
+      alert(`投稿に失敗しました。\n内部エラー\nerror:${error}`);
       return;
     }
   }
@@ -54,9 +66,12 @@ export const CreatePost = (props) => {
             onChange={(e) => {
               setPostContent(e.target.value);
             }} />
-          <button onClick={() => {
-            createPost()
+          <button onClick={(e) => {
+            e.preventDefault();
+            setAlertText('');
+            createPost();
           }}>作成</button>
+          <p className='alert-text'>{alertText}</p>
         </form>
       </div>
     </div>

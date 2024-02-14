@@ -8,21 +8,34 @@ export const Threads = () => {
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showMore, setShowMore] = useState(false);
+  const [alertText, setAlertText] = useState('');
 
   useEffect(() => {
     getThreads();
   }, []);
 
   async function getThreads(offset) {
+    setAlertText('');
+    let url = `${baseUrl}/threads`;
+    if (offset !== undefined) url += `?offset=${offset}`;
     try {
-      let url = `${baseUrl}/threads`;
-      if (offset !== undefined) url += `?offset=${offset}`;
-
       const response = await fetch(url);
       await response.json().then((data) => {
         const status = response.status;
         if (status !== 200) {
           alert(`スレッドの取得に失敗しました。\nstuas:${status}`);
+          switch (status) {
+            case 400:
+              setAlertText('スレッドの取得に失敗しました。\nバリデーションエラー');
+              break;
+            case 500:
+              setAlertText('スレッドの取得に失敗しました。\nサーバーでエラーが発生しました。');
+              break;
+            default:
+              setAlertText(`スレッドの取得に失敗しました。\n不明なエラー statusCode:${status}`);
+              break;
+          }
+          setLoading(false);
           return;
         }
         setShowMore(data.length === 10);
@@ -35,6 +48,8 @@ export const Threads = () => {
     }
     catch (error) {
       alert(`スレッドの取得に失敗しました。\n${error}`);
+      setAlertText(`スレッドの取得に失敗しました。\n${error}`);
+      setLoading(false);
       return;
     }
   }
@@ -70,7 +85,7 @@ export const Threads = () => {
                 もっと表示する
               </button> : null
             }
-
+            <p className='alert-text'>{alertText}</p>
           </>
         }
       </div>

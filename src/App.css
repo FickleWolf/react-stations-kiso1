@@ -182,3 +182,10 @@ textarea {
   height: 16px;
   cursor: pointer;
 }
+
+.alert-text {
+  color: #e62828;
+  font-size: 13px;
+  width: 100%;
+  font-weight: 600;
+}
